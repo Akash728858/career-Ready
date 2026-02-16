@@ -10,9 +10,14 @@ async function request(path, options = {}) {
     ...(token && { Authorization: `Bearer ${token}` }),
     ...options.headers,
   };
-  const res = await fetch(`${API}${path}`, { ...options, headers });
+  let res;
+  try {
+    res = await fetch(`${API}${path}`, { ...options, headers });
+  } catch (err) {
+    throw new Error(err.message === 'Failed to fetch' ? 'Unable to connect. Please check your connection and try again.' : (err.message || 'Network error'));
+  }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || res.statusText);
+  if (!res.ok) throw new Error(data.error || data.message || res.statusText || 'Request failed');
   return data;
 }
 

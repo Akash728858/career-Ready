@@ -38,7 +38,7 @@ export default function LandingPage() {
       }
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Something went wrong');
+      setError(err?.message || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }

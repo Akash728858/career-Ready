@@ -9,6 +9,7 @@ frontend/node_modules/
 
 # Build
 frontend/dist/
+frontend/public/
 
 # Database
 *.db

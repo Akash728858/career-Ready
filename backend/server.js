@@ -13,10 +13,9 @@ const PORT = process.env.PORT || 5000;
 await initDatabase();
 
 const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '..', 'career_platform.db');
-const dbLabel =
-  process.env.VERCEL === '1'
-    ? 'sql.js (in-memory; Vercel serverless)'
-    : `SQLite file: ${path.resolve(dbPath)}`;
+const dbLabel = process.env.VERCEL
+  ? 'sql.js (in-memory; Vercel serverless)'
+  : `SQLite file: ${path.resolve(dbPath)}`;
 
 app.listen(PORT, () => {
   console.log(`Career Platform API running at http://localhost:${PORT}`);

@@ -37,6 +37,16 @@ app.get('*', (req, res, next) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
+// JSON 404 for unknown /api routes (avoid plain-text "Cannot POST …" breaking the SPA client)
+app.use((req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({
+      error: `Not found: ${req.method} ${req.originalUrl || req.url}`,
+    });
+  }
+  res.status(404).type('txt').send('Not found');
+});
+
 // Invalid JSON body from express.json / body-parser — return JSON instead of an HTML stack trace
 app.use((err, req, res, next) => {
   if (err.type === 'entity.parse.failed' || (err instanceof SyntaxError && err.status === 400)) {

@@ -8,7 +8,15 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+/** Vercel sets VERCEL=1; treat any truthy VERCEL as serverless UI. */
+function isVercelServerless() {
+  return Boolean(process.env.VERCEL);
+}
+
 let engine = null;
+
+/** Keep in sync with package.json dependency sql.js version (for CDN fallback). */
+const SQL_JS_VERSION = '1.12.0';
 
 /**
  * Wraps a sql.js Database with a better-sqlite3-like prepare().run / .get / .all API.
@@ -54,12 +62,21 @@ function wrapSqlJsDatabase(sqlDb) {
 export async function initDatabaseEngine() {
   if (engine) return engine;
 
-  if (process.env.VERCEL === '1') {
+  if (isVercelServerless()) {
     const initSqlJs = (await import('sql.js')).default;
-    const require = createRequire(import.meta.url);
-    const wasmPath = require.resolve('sql.js/dist/sql-wasm.wasm');
-    const wasmBinary = fs.readFileSync(wasmPath);
-    const SQL = await initSqlJs({ wasmBinary });
+    let SQL;
+    try {
+      const require = createRequire(import.meta.url);
+      const wasmPath = require.resolve('sql.js/dist/sql-wasm.wasm');
+      const wasmBinary = fs.readFileSync(wasmPath);
+      SQL = await initSqlJs({ wasmBinary });
+    } catch (firstErr) {
+      console.warn('[db] bundled sql-wasm not readable, using CDN:', firstErr?.message);
+      SQL = await initSqlJs({
+        locateFile: (file) =>
+          `https://cdn.jsdelivr.net/npm/sql.js@${SQL_JS_VERSION}/dist/${file}`,
+      });
+    }
     const sqlDb = new SQL.Database();
     sqlDb.run('PRAGMA foreign_keys = ON');
     engine = wrapSqlJsDatabase(sqlDb);

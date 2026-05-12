@@ -45,7 +45,13 @@ async function request(path, options = {}) {
       data = JSON.parse(rawText);
     } catch (parseErr) {
       console.error('[api] Invalid JSON from', `${API}${path}`, parseErr, rawText.slice(0, 200));
-      throw new Error(res.ok ? 'Invalid response from server.' : (res.statusText || 'Request failed'));
+      const snippet = rawText.trim().slice(0, 200);
+      const detail = snippet ? `: ${snippet}` : '';
+      throw new Error(
+        res.ok
+          ? 'Invalid response from server.'
+          : `Server returned HTTP ${res.status}${detail || (res.statusText ? ` (${res.statusText})` : '')}`
+      );
     }
   } else if (rawText.length > 0 && looksLikeHtml) {
     console.error('[api] Expected JSON but received HTML from', `${API}${path}`, '(wrong rewrite/proxy or API offline?)');
@@ -55,7 +61,15 @@ async function request(path, options = {}) {
   }
 
   if (!res.ok) {
-    const msg = data.error || data.message || res.statusText || 'Request failed';
+    const snippet = !looksLikeHtml && rawText.trim() && !data.error && !data.message
+      ? rawText.trim().slice(0, 200)
+      : '';
+    const msg =
+      data.error ||
+      data.message ||
+      (snippet ? `${res.status} ${snippet}` : null) ||
+      res.statusText ||
+      `Request failed (HTTP ${res.status})`;
     console.error('[api]', res.status, path, msg);
     throw new Error(msg);
   }

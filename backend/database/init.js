@@ -1,9 +1,15 @@
 /**
  * Initialize database schema
  */
-import db from '../config/database.js';
+import db, { initDatabaseEngine } from '../config/database.js';
 
-export function initDatabase() {
+let schemaReady = false;
+
+export async function initDatabase() {
+  await initDatabaseEngine();
+  if (schemaReady) return db;
+  schemaReady = true;
+
   // Users
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (

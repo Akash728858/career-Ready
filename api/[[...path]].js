@@ -1,23 +1,11 @@
 /**
- * Vercel serverless handler - forwards all /api/* to Express backend.
- * Uses /tmp for SQLite on serverless (ephemeral; data resets on cold start).
+ * Vercel serverless handler — forwards /api/* to Express.
+ * On Vercel, VERCEL=1: backend uses sql.js (no native better-sqlite3). DB is in-memory per instance.
  */
-if (!process.env.DATABASE_PATH) {
-  process.env.DATABASE_PATH = '/tmp/career_platform.db';
-}
-
 import app from '../backend/app.js';
 import { initDatabase } from '../backend/database/init.js';
 
-let inited = false;
-function ensureDb() {
-  if (!inited) {
-    initDatabase();
-    inited = true;
-  }
-}
-
-export default function handler(req, res) {
-  ensureDb();
+export default async function handler(req, res) {
+  await initDatabase();
   return app(req, res);
 }

@@ -10,11 +10,16 @@ import { initDatabase } from './database/init.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 5000;
 
-initDatabase();
+await initDatabase();
 
 const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '..', 'career_platform.db');
+const dbLabel =
+  process.env.VERCEL === '1'
+    ? 'sql.js (in-memory; Vercel serverless)'
+    : `SQLite file: ${path.resolve(dbPath)}`;
+
 app.listen(PORT, () => {
   console.log(`Career Platform API running at http://localhost:${PORT}`);
   console.log(`API base: http://localhost:${PORT}/api`);
-  console.log(`SQLite database: ${path.resolve(dbPath)}`);
+  console.log(`Database: ${dbLabel}`);
 });
